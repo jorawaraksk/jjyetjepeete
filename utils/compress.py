@@ -9,11 +9,10 @@ async def compress_video(input_file):
             ffmpeg
             .input(input_file)
             .output(output_file, vcodec='libx264', crf=28, preset='fast')
-            .run(overwrite_output=True, capture_stderr=True, capture_stdout=True)
+            .run(overwrite_output=True)
         )
         if os.path.exists(output_file):
             return output_file
-        else:
-            return None
     except ffmpeg.Error as e:
-        return None
+        print("FFmpeg error:", e.stderr.decode())
+    return None
