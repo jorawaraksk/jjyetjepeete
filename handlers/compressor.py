@@ -4,27 +4,21 @@ from utils.compress import compress_video
 import os
 
 def init(app):
-    @app.on_message(filters.command("leech"))
-    async def leech(_, msg: Message):
-        if len(msg.command) < 2:
-            return await msg.reply("❌ Usage: /leech <URL>")
+    @app.on_message(filters.video)
+    async def compress_telegram_video(_, msg: Message):
+        downloading = await msg.reply("📥 Downloading video...")
 
-        url = msg.text.split(maxsplit=1)[1]
-        await msg.reply("⏬ Downloading video...")
+        # Download the video from Telegram
+        input_path = await msg.download()
 
-        # TODO: Replace this with actual download logic
-        filename = "sample.mp4"
-        if not os.path.exists(filename):
-            return await msg.reply("❌ Failed to download video.")
+        await downloading.edit("🎬 Compressing video...")
+        output_path = await compress_video(input_path)
 
-        await msg.reply("🎥 Compressing video...")
-        output = await compress_video(filename)
+        if output_path and os.path.exists(output_path):
+            await downloading.edit("📤 Uploading compressed video...")
+            await msg.reply_video(output_path)
+            os.remove(output_path)
+        else:
+            await downloading.edit("❌ Compression failed.")
 
-        if not output or not os.path.exists(output):
-            return await msg.reply("❌ Compression failed. Check your ffmpeg code or source file.")
-
-        await msg.reply("📤 Uploading compressed video...")
-        await msg.reply_video(output)
-
-        os.remove(filename)
-        os.remove(output)
+        os.remove(input_path)
